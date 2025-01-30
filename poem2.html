@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Poems</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background-color: #000;
+            color: #fff;
+            min-height: 100vh;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+        }
+
+        h1 {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #0ff;
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+            z-index: 10;
+            font-size: 24px;
+            opacity: 0.7;
+        }
+
+        #visualizer {
+            position: fixed;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: min(800px, 90vw); /* Constrain width while staying responsive */
+            height: 100vh;
+            /* Uncomment to debug visualization area */
+            /* border: 1px solid rgba(255, 255, 255, 0.1); */
+        }
+
+        .lyric {
+            position: absolute;
+            font-size: 24px;
+            text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+            pointer-events: none;
+            white-space: nowrap;
+            animation: float 8s linear;
+            opacity: 0;
+            width: max-content;
+        }
+
+        @keyframes float {
+            0% {
+                opacity: 0;
+                transform: translateY(100vh);
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-20vh);
+            }
+        }
+
+        .info-panel {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #888;
+            font-style: italic;
+            opacity: 0;
+            transition: opacity 1s ease;
+            z-index: 10;
+            text-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
+            width: 90%;
+            text-align: center;
+        }
+
+        .info-panel.visible {
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body>
+    <h1>Poems</h1>
+    <div id="visualizer"></div>
+    <div class="info-panel" id="infoPanel"></div>
+
+    <script>
+        const SONGS = {
+            "Blowin' in the Wind": {
+                artist: "Bob Dylan",
+                text: `How many roads must a man walk down
+                Before you call him a man?
+                How many seas must a white dove sail
+                Before she sleeps in the sand?
+                Yes, and how many times must the cannonballs fly
+                Before they're forever banned?
+                The answer, my friend, is blowin' in the wind
+                The answer is blowin' in the wind
+                Yes, and how many years must a mountain exist
+                Before it is washed to the sea?
+                And how many years can some people exist
+                Before they're allowed to be free?
+                Yes, and how many times can a man turn his head
+                And pretend that he just doesn't see?
+                The answer, my friend, is blowin' in the wind
+                The answer is blowin' in the wind
+                Yes, and how many times must a man look up
+                Before he can see the sky?
+                And how many ears must one man have
+                Before he can hear people cry?
+                Yes, and how many deaths will it take 'til he knows
+                That too many people have died?
+                The answer, my friend, is blowin' in the wind
+                The answer is blowin' in the wind`
+            },
+            "Wake Me Up": {
+                artist: "Avicii",
+                text: `Feeling my way through the darkness
+                Guided by a beating heart
+                I can't tell where the journey will end
+                But I know where to start
+                They tell me I'm too young to understand
+                They say I'm caught up in a dream
+                Well life will pass me by if I don't open up my eyes
+                Well that's fine by me
+                So wake me up when it's all over
+                When I'm wiser and I'm older
+                All this time I was finding myself, and I
+                Didn't know I was lost
+                So wake me up when it's all over
+                When I'm wiser and I'm older
+                All this time I was finding myself, and I
+                Didn't know I was lost
+                I tried carrying the weight of the world
+                But I only have two hands
+                Hope I get the chance to travel the world
+                But I don't have any plans
+                Wish that I could stay forever this young
+                Not afraid to close my eyes
+                Life's a game made for everyone
+                And love is a prize`
+            },
+            "Mr. Blue Sky": {
+                artist: "Electric Light Orchestra",
+                text: `Sun is shinin' in the sky
+                There ain't a cloud in sight
+                It's stopped rainin', everybody's in the play
+                And don't you know
+                It's a beautiful new day? Hey
+                Runnin' down the avenue
+                See how the sun shines brightly in the city
+                On the streets where once was pity
+                Mr. Blue Sky is living here today, hey
+                Mr. Blue Sky, please tell us why
+                You had to hide away for so long (so long)
+                Where did we go wrong?
+                Hey you with the pretty face
+                Welcome to the human race
+                A celebration, Mr. Blue Sky's up there waitin'
+                And today is the day we've waited for
+                Oh, Mr. Blue Sky, please tell us why
+                You had to hide away for so long (so long)
+                Where did we go wrong?`
+            },
+            "Me and Julio Down by the Schoolyard": {
+                artist: "Paul Simon",
+                text: `The mama pajama rolled out of bed
+                And she ran to the police station
+                When the papa found out he began to shout
+                And he started the investigation
+                It's against the law
+                It was against the law
+                What the mama saw
+                It was against the law
+                The mama looked down and spit on the ground
+                Every time my name gets mentioned
+                The papa said, "Oy, if I get that boy
+                I'm gonna stick him in the house of detention"
+                Well I'm on my way
+                I don't know where I'm going
+                I'm on my way
+                I'm taking my time
+                But I don't know where
+                Goodbye to Rosie, the queen of Corona
+                Seein' me and Julio
+                Down by the schoolyard
+                Seein' me and Julio
+                Down by the schoolyard`
+            },
+            "Not This Time": {
+                artist: "The 2 Bears",
+                text: `It took a while to mend this broken heart of mine
+                The memories expand and fill the space and time
+                I was living in a world dressed in disguise
+                With your cover blown you had no place to hide
+                And I was only trying to mind my own business
+                I can't believe I caught you out there playing games
+                The more you try denying the more you fan the flames
+                It's no more living in the world dressed in disguise
+                With your cover blown you had no place to hide
+                And I was only trying to mind my own business
+                Yeah I was only trying to mind my own business
+                Baby I was lonely in our bed so many nights
+                Thinking you were out there working thinking you would do me right
+                You come strolling in the sunlight and I listen to your lies
+                Well not this time
+                Not this time, well`
+            }
+        };
+
+        const visualizer = document.getElementById("visualizer");
+        const infoPanel = document.getElementById("infoPanel");
+        let currentSongIndex = -1;
+        const songKeys = Object.keys(SONGS);
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function getNextSong() {
+            currentSongIndex = (currentSongIndex + 1) % songKeys.length;
+            if (currentSongIndex === 0) {
+                shuffleArray(songKeys);
+            }
+            return songKeys[currentSongIndex];
+        }
+
+        function createWord(word) {
+            const lyric = document.createElement("div");
+            lyric.className = "lyric";
+            lyric.textContent = word;
+            
+            const containerWidth = visualizer.offsetWidth;
+            const wordWidth = word.length * 15; // Approximate width based on font size
+            const maxX = containerWidth - wordWidth;
+            const x = Math.random() * maxX;
+            
+            lyric.style.left = `${x}px`;
+            visualizer.appendChild(lyric);
+
+            setTimeout(() => lyric.remove(), 8000);
+        }
+
+        function showSongInfo(title) {
+            infoPanel.textContent = `${title} - ${SONGS[title].artist}`;
+            infoPanel.classList.add("visible");
+            setTimeout(() => {
+                infoPanel.classList.remove("visible");
+            }, 5000);
+        }
+
+        async function visualizeSong() {
+            const title = getNextSong();
+            const song = SONGS[title];
+            showSongInfo(title);
+
+            const words = song.text
+                .split(/\s+/)
+                .filter(word => word.length > 0);
+
+            return new Promise((resolve) => {
+                words.forEach((word, index) => {
+                    setTimeout(() => {
+                        createWord(word);
+                        if (index === words.length - 1) {
+                            setTimeout(resolve, 8000);
+                        }
+                    }, index * 600);
+                });
+            });
+        }
+
+        async function continuousVisualization() {
+            while (true) {
+                await visualizeSong();
+                await new Promise(resolve => setTimeout(resolve, 2000));
+            }
+        }
+
+        continuousVisualization();
+
+        window.addEventListener('resize', () => {
+            visualizer.innerHTML = '';
+        });
+    </script>
+</body>
+</html>
